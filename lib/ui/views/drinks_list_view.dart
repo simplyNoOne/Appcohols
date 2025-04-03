@@ -17,7 +17,7 @@ class _DrinksListViewState extends State<DrinksListView> {
   @override
   void initState() {
     super.initState();
-    futureDrinks = DrinkFetcher().fetchDrinks();
+    futureDrinks = DrinkFetcher().fetchDrinks(1, 25);
   }
 
   goToDrink(Drink drink) => {
