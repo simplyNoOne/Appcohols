@@ -7,6 +7,7 @@ import 'package:appcohols/ui/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:appcohols/ui/components/errors.dart';
+import 'package:flutter_debouncer/flutter_debouncer.dart';
 
 class DrinksListView extends StatefulWidget {
   const DrinksListView({super.key});
@@ -23,12 +24,12 @@ class _DrinksListViewState extends State<DrinksListView> {
   bool sortedAlphabetically = true;
   String _searchPhrase = '';
   late final _pagingController = PagingController<int, Drink>(
-      fetchPage: (pageKey) => DrinkFetcher().fetchDrinks(pageKey, _searchPhrase, sortedAlphabetically),
+      fetchPage: (pageKey) => DrinkFetcher()
+          .fetchDrinks(pageKey, _searchPhrase, sortedAlphabetically),
       getNextPageKey: (state) {
         return state.hasNextPage ? (state.keys?.last ?? 0) + 1 : null;
-      }
-  );
-
+      });
+  final Debouncer _debouncer = Debouncer();
 
   @override
   void initState() {
@@ -37,18 +38,22 @@ class _DrinksListViewState extends State<DrinksListView> {
   }
 
   void filterDrinks(String query) {
-    setState(() {
-      _searchPhrase = query;
-      _pagingController.refresh();
-
-    });
+    const duration = Duration(milliseconds: 500);
+    _debouncer.debounce(
+      duration: duration,
+      onDebounce: () {
+        setState(() {
+          _searchPhrase = query;
+          _pagingController.refresh();
+        });
+      },
+    );
   }
 
   void sortDrinks() {
     setState(() {
       sortedAlphabetically = !sortedAlphabetically;
       _pagingController.refresh();
-
     });
   }
 
@@ -63,68 +68,52 @@ class _DrinksListViewState extends State<DrinksListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColorLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Appcohols',
-          style: Theme.of(context).textTheme.headlineMedium,
+        backgroundColor: AppTheme.backgroundColorLight,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: Text(
+            'Appcohols',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          surfaceTintColor: Colors.transparent,
         ),
-        surfaceTintColor: Colors.transparent,
-      ),
-      body: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _TopRibbon(searchController: _searchController, sortedAlphabetically: sortedAlphabetically, filterDrinks: filterDrinks, sortDrinks: sortDrinks),
-                Expanded(
-                  child: PagingListener(
-                    controller: _pagingController,
-                    // builder: (context, state, fetchNextPage) => _DrinkPagedList(state: state, fetchNextPage: fetchNextPage, itemAction: goToDrink, pagingController: _pagingController)
-                      builder: (context, state, fetchNextPage) =>
-                      PagedListView<int, Drink>.separated(
-                    state: state,
-                    fetchNextPage: fetchNextPage,
-                    builderDelegate: PagedChildBuilderDelegate(
-                      animateTransitions: true,
-                      itemBuilder: (context, item, index) => DrinkTile(
-                        key: ValueKey(item.id),
-                        name: item.name,
-                        imageUrl: item.imageUrl,
-                        onTap: () => goToDrink(item),
-                      ),
-                      firstPageErrorIndicatorBuilder: (context) =>
-                          CustomFirstPageError(pagingController: _pagingController),
-                      newPageErrorIndicatorBuilder: (context) =>
-                          CustomNewPageError(pagingController: _pagingController),
-                    ),
-                    separatorBuilder: (context, index) => const Divider(),
-                  )
-                  ),
-                ),
-              ],
-            )
-    );
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _TopRibbon(
+                searchController: _searchController,
+                sortedAlphabetically: sortedAlphabetically,
+                filterDrinks: filterDrinks,
+                sortDrinks: sortDrinks),
+            Expanded(
+              child: PagingListener(
+                  controller: _pagingController,
+                  builder: (context, state, fetchNextPage) => _DrinkPagedList(
+                      state: state,
+                      fetchNextPage: fetchNextPage,
+                      itemAction: goToDrink,
+                      pagingController: _pagingController)),
+            ),
+          ],
+        ));
   }
 }
 
 class _DrinkPagedList extends StatelessWidget {
-
-  const _DrinkPagedList({
-    required this.state,
-    required this.fetchNextPage,
-    required this.itemAction,
-  required this.pagingController
-});
+  const _DrinkPagedList(
+      {required this.state,
+      required this.fetchNextPage,
+      required this.itemAction,
+      required this.pagingController});
 
   final PagingState<int, Drink> state;
   final VoidCallback fetchNextPage;
   final void Function(Drink) itemAction;
   final PagingController<Object, Object> pagingController;
 
-
   @override
   Widget build(BuildContext context) {
-    return  PagedListView<int, Drink>.separated(
+    return PagedListView<int, Drink>.separated(
       state: state,
       fetchNextPage: fetchNextPage,
       builderDelegate: PagedChildBuilderDelegate(
@@ -145,9 +134,7 @@ class _DrinkPagedList extends StatelessWidget {
   }
 }
 
-
 class _TopRibbon extends StatelessWidget {
-
   const _TopRibbon({
     super.key,
     required this.searchController,
@@ -161,25 +148,22 @@ class _TopRibbon extends StatelessWidget {
   final ValueChanged<String> filterDrinks;
   final VoidCallback sortDrinks;
 
-
   @override
   Widget build(BuildContext context) {
     return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Expanded(
-                  child: SearchBar(
-                    controller: searchController,
-                    onChanged: filterDrinks,
-                    hintText: 'Search for drink',
-                  )),
-              IconButton(
-                  icon: sortedAlphabetically
-                      ? Icon(FontAwesomeIcons.arrowDownAZ)
-                      : Icon(FontAwesomeIcons.arrowUpAZ),
-                  onPressed: sortDrinks)
-            ]));
+        child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+          Expanded(
+              child: SearchBar(
+            controller: searchController,
+            onChanged: filterDrinks,
+            hintText: 'Search for drink',
+          )),
+          IconButton(
+              icon: sortedAlphabetically
+                  ? Icon(FontAwesomeIcons.arrowDownAZ)
+                  : Icon(FontAwesomeIcons.arrowUpAZ),
+              onPressed: sortDrinks)
+        ]));
   }
 }
