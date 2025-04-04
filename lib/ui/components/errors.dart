@@ -22,21 +22,13 @@ class CustomFirstPageError extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            if (state.error != null) ...[
-              const SizedBox(
-                height: 16,
-              ),
-              Text(
-                state.error.toString(),
-                textAlign: TextAlign.center,
-              ),
-            ],
             const SizedBox(
               height: 48,
             ),
             SizedBox(
               width: 200,
               child: ElevatedButton.icon(
+                style : ButtonStyle(backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.error)),
                 onPressed: pagingController.refresh,
                 icon: const Icon(Icons.refresh),
                 label: const Text(

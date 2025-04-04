@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:appcohols/ui/components/drink_tile.dart';
 import 'package:appcohols/data/drink.dart';
 import 'package:appcohols/data/drink_fetcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:appcohols/ui/components/top_ribbon.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:appcohols/ui/components/errors.dart';
 import 'package:flutter_debouncer/flutter_debouncer.dart';
@@ -16,18 +16,16 @@ class DrinksListView extends StatefulWidget {
 }
 
 class _DrinksListViewState extends State<DrinksListView> {
-  List<Drink> allDrinks = [];
-  List<Drink> filteredDrinks = [];
   late TextEditingController _searchController;
-  bool successFetching = true;
-  bool sortedAlphabetically = true;
+  bool _sortedAlphabetically = true;
   String _searchPhrase = '';
   late final _pagingController = PagingController<int, Drink>(
-      fetchPage: (pageKey) => DrinkFetcher()
-          .fetchDrinks(pageKey, _searchPhrase, sortedAlphabetically),
       getNextPageKey: (state) {
-        return state.hasNextPage ? (state.keys?.last ?? 0) + 1 : null;
-      });
+        int nextPage = (state.keys?.last ?? 0) + 1;
+        return (DrinkFetcher().getLastPage() >= nextPage) ? nextPage : null;
+      },
+      fetchPage: (pageKey) => DrinkFetcher()
+          .fetchDrinks(pageKey, _searchPhrase, _sortedAlphabetically));
   final Debouncer _debouncer = Debouncer();
 
   @override
@@ -51,7 +49,7 @@ class _DrinksListViewState extends State<DrinksListView> {
 
   void sortDrinks() {
     setState(() {
-      sortedAlphabetically = !sortedAlphabetically;
+      _sortedAlphabetically = !_sortedAlphabetically;
       _pagingController.refresh();
     });
   }
@@ -78,9 +76,9 @@ class _DrinksListViewState extends State<DrinksListView> {
         body: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _TopRibbon(
+            TopRibbon(
                 searchController: _searchController,
-                sortedAlphabetically: sortedAlphabetically,
+                sortedAlphabetically: _sortedAlphabetically,
                 filterDrinks: filterDrinks,
                 sortDrinks: sortDrinks),
             Expanded(
@@ -96,6 +94,7 @@ class _DrinksListViewState extends State<DrinksListView> {
         ));
   }
 }
+
 
 class _DrinkPagedList extends StatelessWidget {
   const _DrinkPagedList(
@@ -131,39 +130,5 @@ class _DrinkPagedList extends StatelessWidget {
       ),
       separatorBuilder: (context, index) => const SizedBox(),
     );
-  }
-}
-
-class _TopRibbon extends StatelessWidget {
-  const _TopRibbon({
-    super.key,
-    required this.searchController,
-    required this.sortedAlphabetically,
-    required this.filterDrinks,
-    required this.sortDrinks,
-  });
-
-  final TextEditingController searchController;
-  final bool sortedAlphabetically;
-  final ValueChanged<String> filterDrinks;
-  final VoidCallback sortDrinks;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-          Expanded(
-              child: SearchBar(
-            controller: searchController,
-            onChanged: filterDrinks,
-            hintText: 'Search for drink',
-          )),
-          IconButton(
-              icon: sortedAlphabetically
-                  ? Icon(FontAwesomeIcons.arrowDownAZ)
-                  : Icon(FontAwesomeIcons.arrowUpAZ),
-              onPressed: sortDrinks)
-        ]));
   }
 }

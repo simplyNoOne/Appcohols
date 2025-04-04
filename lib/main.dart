@@ -20,9 +20,9 @@ class MyApp extends StatelessWidget {
             onSurface: Color(0xFF1B1B1B),
             secondary: Color(0x33000000),
             onSecondary: Color(0xFF1B1B1B),
-            error: Colors.red,
+            error: Color(0xFF4E3F01),
             onError: Colors.white54,
-            primary: Colors.yellow,
+            primary: Color(0xFFF4DE85),
             onPrimary: Colors.grey
         ),
         useMaterial3: true,
@@ -34,10 +34,10 @@ class MyApp extends StatelessWidget {
             onSurface: Color(0xFFD8D7D7),
             secondary: Color(0x33FAF9F9),
             onSecondary: Color(0xFFD8D7D7),
-            error: Colors.red,
+            error: Color(0xFFF4DE85),
             onError: Colors.white54,
-            primary: Colors.yellow,
-          onPrimary: Colors.grey
+            primary: Color(0xFF4E3F01),
+            onPrimary: Colors.grey
         ),
         useMaterial3: true
       ),
