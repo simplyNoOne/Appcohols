@@ -4,6 +4,7 @@ import 'package:appcohols/ui/components/drink_tile.dart';
 import 'package:appcohols/data/drink.dart';
 import 'package:appcohols/data/drink_fetcher.dart';
 import 'package:appcohols/ui/app_theme.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class DrinksListView extends StatefulWidget {
   const DrinksListView({super.key});
@@ -13,35 +14,41 @@ class DrinksListView extends StatefulWidget {
 }
 
 class _DrinksListViewState extends State<DrinksListView> {
+  final drinksPerPage = 200;
   List<Drink> allDrinks = [];
   List<Drink> filteredDrinks = [];
   late TextEditingController _searchController;
+  bool successFetching = true;
+  bool sortedAlphabetically = true;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    fetchDrinks();
+    fetchDrinks(1);
   }
 
-  Future<void> fetchDrinks() async {
+  Future<void> fetchDrinks(page) async {
     try {
-      List<Drink> drinks = await DrinkFetcher().fetchDrinks(1, 25);
+      List<Drink> drinks =
+          await DrinkFetcher().fetchDrinks(page, drinksPerPage);
+      drinks.sort((a, b) => a.name.compareTo(b.name));
       setState(() {
         allDrinks = drinks;
         filteredDrinks = drinks;
       });
     } catch (e) {
-      print("Error fetching drinks: $e");
+      setState(() {
+        successFetching = false;
+      });
     }
   }
 
-  // Method to filter the drinks based on the search query
   void filterDrinks(String query) {
     final filtered = allDrinks.where((drink) {
       final nameLower = drink.name.toLowerCase();
       final searchLower = query.toLowerCase();
-      return nameLower.contains(searchLower); // Filtering logic
+      return nameLower.contains(searchLower);
     }).toList();
 
     setState(() {
@@ -49,13 +56,21 @@ class _DrinksListViewState extends State<DrinksListView> {
     });
   }
 
+  void sortDrinks() {
+    setState(() {
+      allDrinks = allDrinks.reversed.toList();
+      filteredDrinks = filteredDrinks.reversed.toList();
+      sortedAlphabetically = !sortedAlphabetically;
+    });
+  }
+
   goToDrink(Drink drink) => {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DrinkDetailsView(drink: drink),
-        ))
-  };
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DrinkDetailsView(drink: drink),
+            ))
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -69,25 +84,36 @@ class _DrinksListViewState extends State<DrinksListView> {
         ),
         surfaceTintColor: Colors.transparent,
       ),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SearchBar(
-              controller: _searchController,
-              onChanged: filterDrinks,
-              hintText: 'Search for drink',
-            ),
-          ),
-          Expanded(
-            child: _DrinkList(
-              drinks: filteredDrinks, // Use filtered drinks here
-              goToDrink: goToDrink,
-            ),
-          ),
-        ],
-      ),
+      body: successFetching
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Expanded(
+                              child: SearchBar(
+                            controller: _searchController,
+                            onChanged: filterDrinks,
+                            hintText: 'Search for drink',
+                          )),
+                          IconButton(
+                              icon: sortedAlphabetically
+                                  ? Icon(FontAwesomeIcons.arrowDownAZ)
+                                  : Icon(FontAwesomeIcons.arrowUpAZ),
+                              onPressed: sortDrinks)
+                        ])),
+                Expanded(
+                  child: _DrinkList(
+                    drinks: filteredDrinks, // Use filtered drinks here
+                    goToDrink: goToDrink,
+                  ),
+                ),
+              ],
+            )
+          : Text('Sorry, we encountered an unexpected error.'),
     );
   }
 }
