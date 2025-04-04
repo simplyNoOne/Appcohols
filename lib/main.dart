@@ -14,8 +14,32 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Appcohols',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellowAccent),
+        colorScheme: ColorScheme(
+            brightness: Brightness.light,
+            surface: Color(0xFFF1DC92),
+            onSurface: Color(0xFF1B1B1B),
+            secondary: Color(0x33000000),
+            onSecondary: Color(0xFF1B1B1B),
+            error: Colors.red,
+            onError: Colors.white54,
+            primary: Colors.yellow,
+            onPrimary: Colors.grey
+        ),
         useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme(
+            brightness: Brightness.dark,
+            surface: Color(0xFF2B2204),
+            onSurface: Color(0xFFD8D7D7),
+            secondary: Color(0x33FAF9F9),
+            onSecondary: Color(0xFFD8D7D7),
+            error: Colors.red,
+            onError: Colors.white54,
+            primary: Colors.yellow,
+          onPrimary: Colors.grey
+        ),
+        useMaterial3: true
       ),
       home: const DrinksListView(),
     );

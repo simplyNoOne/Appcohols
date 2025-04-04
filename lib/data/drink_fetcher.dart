@@ -21,7 +21,7 @@ class DrinkFetcher {
   final Map<int, List<Ingredient>> _drinksIngredientsCache = {};
 
   Future<List<Drink>> fetchDrinks(int page, String searchPhrase, bool alphabetical) async {
-    // if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical))) {
+    if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical))) {
       print("Fetching deets from URL");
       String sign = alphabetical ? '+' : '-';
     final uri = Uri.parse('$apiUrl/cocktails')
@@ -31,16 +31,15 @@ class DrinkFetcher {
     if (response.statusCode == 200) {
     final Map<String, dynamic> responseData = jsonDecode(response.body);
     List<dynamic> rawDrinkList = responseData['data'];
-    return rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
-    // _drinksPagedCache[(page, searchPhrase, alphabetical)] = rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
+    // return rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
+    _drinksPagedCache[(page, searchPhrase, alphabetical)] = rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
 
-    // } else {
-    //   _drinksPagedCache[(page, searchPhrase, alphabetical)] = [];
-    // throw Exception('Failed to load album');
-    // }
+    } else {
+      _drinksPagedCache[(page, searchPhrase, alphabetical)] = [];
+    throw Exception('Failed to load album');
     }
-    return [];
-    // return _drinksPagedCache[(page, searchPhrase, alphabetical)]!;
+    }
+    return _drinksPagedCache[(page, searchPhrase, alphabetical)]!;
   }
 
   Future<List<Ingredient>> fetchIngredientsForDrink(int drinkId) async {

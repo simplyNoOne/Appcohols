@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:appcohols/ui/components/drink_tile.dart';
 import 'package:appcohols/data/drink.dart';
 import 'package:appcohols/data/drink_fetcher.dart';
-import 'package:appcohols/ui/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:appcohols/ui/components/errors.dart';
@@ -68,7 +67,6 @@ class _DrinksListViewState extends State<DrinksListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppTheme.backgroundColorLight,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           title: Text(
@@ -118,18 +116,20 @@ class _DrinkPagedList extends StatelessWidget {
       fetchNextPage: fetchNextPage,
       builderDelegate: PagedChildBuilderDelegate(
         animateTransitions: true,
-        itemBuilder: (context, item, index) => DrinkTile(
-          key: ValueKey(item.id),
-          name: item.name,
-          imageUrl: item.imageUrl,
-          onTap: () => itemAction(item),
-        ),
+        itemBuilder: (context, item, index) => Padding(
+            padding: EdgeInsets.all(10),
+            child: DrinkTile(
+              key: ValueKey(item.id),
+              name: item.name,
+              imageUrl: item.imageUrl,
+              onTap: () => itemAction(item),
+            )),
         firstPageErrorIndicatorBuilder: (context) =>
             CustomFirstPageError(pagingController: pagingController),
         newPageErrorIndicatorBuilder: (context) =>
             CustomNewPageError(pagingController: pagingController),
       ),
-      separatorBuilder: (context, index) => const Divider(),
+      separatorBuilder: (context, index) => const SizedBox(),
     );
   }
 }
