@@ -16,28 +16,31 @@ class DrinkFetcher {
 
 
   final String apiUrl = "https://cocktails.solvro.pl/api/v1";
-
-  final Map<(int, int), List<Drink>> _drinksPagedCache = {};
+  final perPage = 30;
+  final Map<(int, String, bool), List<Drink>> _drinksPagedCache = {};
   final Map<int, List<Ingredient>> _drinksIngredientsCache = {};
 
-  Future<List<Drink>> fetchDrinks(int page, int perPage) async {
-    if (!_drinksPagedCache.containsKey((page, perPage))) {
+  Future<List<Drink>> fetchDrinks(int page, String searchPhrase, bool alphabetical) async {
+    // if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical))) {
       print("Fetching deets from URL");
+      String sign = alphabetical ? '+' : '-';
     final uri = Uri.parse('$apiUrl/cocktails')
-        .replace(queryParameters: {'page': '$page', 'perPage': '$perPage'});
+        .replace(queryParameters: {'page': '$page', 'perPage': '$perPage', 'name': '%$searchPhrase%', 'sort': '${sign}name'});
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
     final Map<String, dynamic> responseData = jsonDecode(response.body);
     List<dynamic> rawDrinkList = responseData['data'];
-    _drinksPagedCache[(page, perPage)] = rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
+    return rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
+    // _drinksPagedCache[(page, searchPhrase, alphabetical)] = rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
 
-    } else {
-      _drinksPagedCache[(page, perPage)] = [];
-    throw Exception('Failed to load album');
+    // } else {
+    //   _drinksPagedCache[(page, searchPhrase, alphabetical)] = [];
+    // throw Exception('Failed to load album');
+    // }
     }
-    }
-    return _drinksPagedCache[(page, perPage)]!;
+    return [];
+    // return _drinksPagedCache[(page, searchPhrase, alphabetical)]!;
   }
 
   Future<List<Ingredient>> fetchIngredientsForDrink(int drinkId) async {

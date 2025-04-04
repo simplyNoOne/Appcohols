@@ -5,6 +5,8 @@ import 'package:appcohols/data/drink.dart';
 import 'package:appcohols/data/drink_fetcher.dart';
 import 'package:appcohols/ui/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:appcohols/ui/components/errors.dart';
 
 class DrinksListView extends StatefulWidget {
   const DrinksListView({super.key});
@@ -14,53 +16,39 @@ class DrinksListView extends StatefulWidget {
 }
 
 class _DrinksListViewState extends State<DrinksListView> {
-  final drinksPerPage = 200;
   List<Drink> allDrinks = [];
   List<Drink> filteredDrinks = [];
   late TextEditingController _searchController;
   bool successFetching = true;
   bool sortedAlphabetically = true;
+  String _searchPhrase = '';
+  late final _pagingController = PagingController<int, Drink>(
+      fetchPage: (pageKey) => DrinkFetcher().fetchDrinks(pageKey, _searchPhrase, sortedAlphabetically),
+      getNextPageKey: (state) {
+        return state.hasNextPage ? (state.keys?.last ?? 0) + 1 : null;
+      }
+  );
+
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    fetchDrinks(1);
-  }
-
-  Future<void> fetchDrinks(page) async {
-    try {
-      List<Drink> drinks =
-          await DrinkFetcher().fetchDrinks(page, drinksPerPage);
-      drinks.sort((a, b) => a.name.compareTo(b.name));
-      setState(() {
-        allDrinks = drinks;
-        filteredDrinks = drinks;
-      });
-    } catch (e) {
-      setState(() {
-        successFetching = false;
-      });
-    }
   }
 
   void filterDrinks(String query) {
-    final filtered = allDrinks.where((drink) {
-      final nameLower = drink.name.toLowerCase();
-      final searchLower = query.toLowerCase();
-      return nameLower.contains(searchLower);
-    }).toList();
-
     setState(() {
-      filteredDrinks = filtered;
+      _searchPhrase = query;
+      _pagingController.refresh();
+
     });
   }
 
   void sortDrinks() {
     setState(() {
-      allDrinks = allDrinks.reversed.toList();
-      filteredDrinks = filteredDrinks.reversed.toList();
       sortedAlphabetically = !sortedAlphabetically;
+      _pagingController.refresh();
+
     });
   }
 
@@ -84,68 +72,114 @@ class _DrinksListViewState extends State<DrinksListView> {
         ),
         surfaceTintColor: Colors.transparent,
       ),
-      body: successFetching
-          ? Column(
+      body: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Expanded(
-                              child: SearchBar(
-                            controller: _searchController,
-                            onChanged: filterDrinks,
-                            hintText: 'Search for drink',
-                          )),
-                          IconButton(
-                              icon: sortedAlphabetically
-                                  ? Icon(FontAwesomeIcons.arrowDownAZ)
-                                  : Icon(FontAwesomeIcons.arrowUpAZ),
-                              onPressed: sortDrinks)
-                        ])),
+                _TopRibbon(searchController: _searchController, sortedAlphabetically: sortedAlphabetically, filterDrinks: filterDrinks, sortDrinks: sortDrinks),
                 Expanded(
-                  child: _DrinkList(
-                    drinks: filteredDrinks, // Use filtered drinks here
-                    goToDrink: goToDrink,
+                  child: PagingListener(
+                    controller: _pagingController,
+                    // builder: (context, state, fetchNextPage) => _DrinkPagedList(state: state, fetchNextPage: fetchNextPage, itemAction: goToDrink, pagingController: _pagingController)
+                      builder: (context, state, fetchNextPage) =>
+                      PagedListView<int, Drink>.separated(
+                    state: state,
+                    fetchNextPage: fetchNextPage,
+                    builderDelegate: PagedChildBuilderDelegate(
+                      animateTransitions: true,
+                      itemBuilder: (context, item, index) => DrinkTile(
+                        key: ValueKey(item.id),
+                        name: item.name,
+                        imageUrl: item.imageUrl,
+                        onTap: () => goToDrink(item),
+                      ),
+                      firstPageErrorIndicatorBuilder: (context) =>
+                          CustomFirstPageError(pagingController: _pagingController),
+                      newPageErrorIndicatorBuilder: (context) =>
+                          CustomNewPageError(pagingController: _pagingController),
+                    ),
+                    separatorBuilder: (context, index) => const Divider(),
+                  )
                   ),
                 ),
               ],
             )
-          : Text('Sorry, we encountered an unexpected error.'),
     );
   }
 }
 
-class _DrinkList extends StatelessWidget {
-  const _DrinkList({
-    super.key,
-    required this.drinks,
-    required this.goToDrink,
-  });
+class _DrinkPagedList extends StatelessWidget {
 
-  final List<Drink> drinks;
-  final void Function(Drink) goToDrink;
+  const _DrinkPagedList({
+    required this.state,
+    required this.fetchNextPage,
+    required this.itemAction,
+  required this.pagingController
+});
+
+  final PagingState<int, Drink> state;
+  final VoidCallback fetchNextPage;
+  final void Function(Drink) itemAction;
+  final PagingController<Object, Object> pagingController;
+
 
   @override
   Widget build(BuildContext context) {
-    if (drinks.isEmpty) {
-      return const Center(child: Text('No drinks available.'));
-    }
-    return ListView.builder(
-      itemCount: drinks.length,
-      itemBuilder: (context, index) {
-        final drink = drinks[index];
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: DrinkTile(
-            name: drink.name,
-            imageUrl: drink.imageUrl,
-            onTap: () => goToDrink(drink),
-          ),
-        );
-      },
+    return  PagedListView<int, Drink>.separated(
+      state: state,
+      fetchNextPage: fetchNextPage,
+      builderDelegate: PagedChildBuilderDelegate(
+        animateTransitions: true,
+        itemBuilder: (context, item, index) => DrinkTile(
+          key: ValueKey(item.id),
+          name: item.name,
+          imageUrl: item.imageUrl,
+          onTap: () => itemAction(item),
+        ),
+        firstPageErrorIndicatorBuilder: (context) =>
+            CustomFirstPageError(pagingController: pagingController),
+        newPageErrorIndicatorBuilder: (context) =>
+            CustomNewPageError(pagingController: pagingController),
+      ),
+      separatorBuilder: (context, index) => const Divider(),
     );
+  }
+}
+
+
+class _TopRibbon extends StatelessWidget {
+
+  const _TopRibbon({
+    super.key,
+    required this.searchController,
+    required this.sortedAlphabetically,
+    required this.filterDrinks,
+    required this.sortDrinks,
+  });
+
+  final TextEditingController searchController;
+  final bool sortedAlphabetically;
+  final ValueChanged<String> filterDrinks;
+  final VoidCallback sortDrinks;
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                  child: SearchBar(
+                    controller: searchController,
+                    onChanged: filterDrinks,
+                    hintText: 'Search for drink',
+                  )),
+              IconButton(
+                  icon: sortedAlphabetically
+                      ? Icon(FontAwesomeIcons.arrowDownAZ)
+                      : Icon(FontAwesomeIcons.arrowUpAZ),
+                  onPressed: sortDrinks)
+            ]));
   }
 }
