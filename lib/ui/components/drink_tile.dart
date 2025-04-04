@@ -18,12 +18,13 @@ class DrinkTile extends StatelessWidget {
           Container(
               margin: const EdgeInsets.only(right: 15.0),
               child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
+                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), topLeft: Radius.circular(15)),
                   child: Image.network(
                     imageUrl,
                     width: 100,
                     height: 100,
                     fit: BoxFit.contain,
+
                   ))),
           Text(name, style: Theme.of(context).textTheme.titleLarge),
         ],
@@ -34,9 +35,10 @@ class DrinkTile extends StatelessWidget {
 
 final ButtonStyle flatButtonStyle = TextButton.styleFrom(
   foregroundColor: Colors.black87,
+  backgroundColor: Color.fromRGBO(7, 7, 7, 0.09019607843137255),
   minimumSize: Size(88, 36),
-  padding: EdgeInsets.symmetric(horizontal: 16),
+  padding: EdgeInsets.symmetric(horizontal: 0),
   shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(5)),
+    borderRadius: BorderRadius.all( Radius.circular(15))
   ),
 );
