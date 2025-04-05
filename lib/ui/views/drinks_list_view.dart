@@ -8,6 +8,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:appcohols/ui/components/errors.dart';
 import 'package:flutter_debouncer/flutter_debouncer.dart';
 
+
 class DrinksListView extends StatefulWidget {
   const DrinksListView({super.key});
 
@@ -18,14 +19,17 @@ class DrinksListView extends StatefulWidget {
 class _DrinksListViewState extends State<DrinksListView> {
   late TextEditingController _searchController;
   bool _sortedAlphabetically = true;
+  String _category = '';
   String _searchPhrase = '';
   late final _pagingController = PagingController<int, Drink>(
       getNextPageKey: (state) {
+
         int nextPage = (state.keys?.last ?? 0) + 1;
-        return (DrinkFetcher().getLastPage() >= nextPage) ? nextPage : null;
+         return (DrinkFetcher().getLastPage() >= nextPage) ? nextPage : null;
+
       },
       fetchPage: (pageKey) => DrinkFetcher()
-          .fetchDrinks(pageKey, _searchPhrase, _sortedAlphabetically));
+          .fetchDrinks(pageKey, _searchPhrase, _sortedAlphabetically, _category));
   final Debouncer _debouncer = Debouncer();
 
   @override
@@ -50,6 +54,14 @@ class _DrinksListViewState extends State<DrinksListView> {
   void sortDrinks() {
     setState(() {
       _sortedAlphabetically = !_sortedAlphabetically;
+      _pagingController.refresh();
+    });
+  }
+
+  void filterByCategory(String value) {
+    setState(() {
+      print(value);
+      _category = value;
       _pagingController.refresh();
     });
   }
@@ -80,7 +92,9 @@ class _DrinksListViewState extends State<DrinksListView> {
                 searchController: _searchController,
                 sortedAlphabetically: _sortedAlphabetically,
                 filterDrinks: filterDrinks,
-                sortDrinks: sortDrinks),
+                sortDrinks: sortDrinks,
+                filterByCategory: filterByCategory
+            ),
             Expanded(
               child: PagingListener(
                   controller: _pagingController,

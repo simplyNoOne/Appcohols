@@ -13,42 +13,59 @@ class DrinkFetcher {
     return _instance;
   }
 
+  bool neverSet = true;
   int lastPage = 1;
   final String apiUrl = "https://cocktails.solvro.pl/api/v1";
   final perPage = 30;
-  final Map<(int, String, bool), List<Drink>> _drinksPagedCache = {};
+  final Map<(int, String, bool, String), List<Drink>> _drinksPagedCache = {};
   final Map<int, List<Ingredient>> _drinksIngredientsCache = {};
+  List<String> _categories = [];
 
   int getLastPage() {
     return lastPage;
   }
 
   Future<List<Drink>> fetchDrinks(
-      int page, String searchPhrase, bool alphabetical) async {
-    if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical))) {
-      print("Fetching deets from URL");
+      int page, String searchPhrase, bool alphabetical, String category) async {
+    print('fetching page $page');
+    if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical, category))) {
       String sign = alphabetical ? '+' : '-';
-      final uri = Uri.parse('$apiUrl/cocktails').replace(queryParameters: {
-        'page': '$page',
-        'perPage': '$perPage',
-        'name': '%$searchPhrase%',
-        'sort': '${sign}name'
-      });
+      Uri uri = Uri.parse('$apiUrl/cocktails');
+      if (category == '') {
+        print('Lubie twoja stara');
+        uri = uri.replace(queryParameters: {
+          'page': '$page',
+          'perPage': '$perPage',
+          'name': '%$searchPhrase%',
+          'sort': '${sign}name'
+        });
+      } else {
+        print('Twoj stary pijany');
+        uri = uri.replace(queryParameters: {
+          'page': '$page',
+          'perPage': '$perPage',
+          'name': '%$searchPhrase%',
+          'category': '$category',
+          'sort': '${sign}name',
+        });
+      }
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        lastPage = responseData['meta']['lastPage'];
+        if (neverSet) {
+          lastPage = responseData['meta']['lastPage'];
+          neverSet = false;
+        }
         List<dynamic> rawDrinkList = responseData['data'];
-        // return rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
-        _drinksPagedCache[(page, searchPhrase, alphabetical)] =
+        _drinksPagedCache[(page, searchPhrase, alphabetical, category)] =
             rawDrinkList.map((jsonObj) => Drink.fromJson(jsonObj)).toList();
       } else {
-        _drinksPagedCache[(page, searchPhrase, alphabetical)] = [];
-        throw Exception('Failed to load album');
+        _drinksPagedCache[(page, searchPhrase, alphabetical, category)] = [];
+        throw Exception('Failed to load drinks');
       }
     }
-    return _drinksPagedCache[(page, searchPhrase, alphabetical)]!;
+    return _drinksPagedCache[(page, searchPhrase, alphabetical, category)]!;
   }
 
   Future<List<Ingredient>> fetchIngredientsForDrink(int drinkId) async {
@@ -64,9 +81,27 @@ class DrinkFetcher {
             .toList();
       } else {
         _drinksIngredientsCache[drinkId] = [];
-        throw Exception('Failed to load album');
+        throw Exception('Failed to load ingredients');
       }
     }
     return _drinksIngredientsCache[drinkId]!;
+  }
+
+  Future<List<String>> fetchCategories() async {
+    if (_categories.isEmpty) {
+      final uri = Uri.parse('$apiUrl/cocktails/categories');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        _categories = (responseData['data'] as List<dynamic>)
+            .map((category) => category.toString()) // Convert each item to a String
+            .toList();
+        print('dsfd');
+      } else {
+        _categories = [];
+        throw Exception('Failed to load categories');
+      }
+    }
+    return _categories;
   }
 }
