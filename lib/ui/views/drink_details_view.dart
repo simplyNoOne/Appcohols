@@ -51,7 +51,6 @@ class _DrinkDetailsViewState extends State<DrinkDetailsView> {
                             return _IngredientsInfo(
                                 ingredientsInfo: snapshot.data!);
                           }
-                          // print(futureDrinks.toString());
                           return Text("Sorry, could not fetch ingredients.");
                         }),
                     Padding(
@@ -70,13 +69,12 @@ class _DrinkDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-        children: [
+    return Column(children: [
       Text(
         '${drink.category}',
       ),
       Text(
-        'Served in ${drink.glass}',
+        'Served in ${drink.glass.toLowerCase()}.',
       ),
       Padding(
         padding: EdgeInsets.only(top: 15),
@@ -95,7 +93,9 @@ class _DrinkDetails extends StatelessWidget {
 
 class _IngredientsInfo extends StatelessWidget {
   const _IngredientsInfo({super.key, required this.ingredientsInfo});
+
   final List<Ingredient> ingredientsInfo;
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(

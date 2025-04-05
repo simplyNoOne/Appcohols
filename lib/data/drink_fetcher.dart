@@ -28,11 +28,11 @@ class DrinkFetcher {
   Future<List<Drink>> fetchDrinks(
       int page, String searchPhrase, bool alphabetical, String category) async {
     print('fetching page $page');
-    if (!_drinksPagedCache.containsKey((page, searchPhrase, alphabetical, category))) {
+    if (!_drinksPagedCache
+        .containsKey((page, searchPhrase, alphabetical, category))) {
       String sign = alphabetical ? '+' : '-';
       Uri uri = Uri.parse('$apiUrl/cocktails');
       if (category == '') {
-        print('Lubie twoja stara');
         uri = uri.replace(queryParameters: {
           'page': '$page',
           'perPage': '$perPage',
@@ -40,7 +40,6 @@ class DrinkFetcher {
           'sort': '${sign}name'
         });
       } else {
-        print('Twoj stary pijany');
         uri = uri.replace(queryParameters: {
           'page': '$page',
           'perPage': '$perPage',
@@ -70,7 +69,6 @@ class DrinkFetcher {
 
   Future<List<Ingredient>> fetchIngredientsForDrink(int drinkId) async {
     if (!_drinksIngredientsCache.containsKey(drinkId)) {
-      print("Fetching from URL");
       final uri = Uri.parse('$apiUrl/cocktails/$drinkId');
       final response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -94,9 +92,9 @@ class DrinkFetcher {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         _categories = (responseData['data'] as List<dynamic>)
-            .map((category) => category.toString()) // Convert each item to a String
+            .map((category) =>
+                category.toString()) // Convert each item to a String
             .toList();
-        print('dsfd');
       } else {
         _categories = [];
         throw Exception('Failed to load categories');
