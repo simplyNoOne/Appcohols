@@ -26,7 +26,10 @@ class DrinkTile extends StatelessWidget {
                     fit: BoxFit.contain,
 
                   ))),
-          Text(name, style: Theme.of(context).textTheme.titleLarge),
+          Expanded(child: Text(
+              name,
+              style: Theme.of(context).textTheme.titleLarge,
+            softWrap: true, )),
         ],
       ),
     );

@@ -34,13 +34,15 @@ class _DrinkDetailsViewState extends State<DrinkDetailsView> {
           Container(
               padding: EdgeInsets.all(20),
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(top: 5),
-                      child: _DrinkDetails(drink: widget.drink),
-                    ),
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          widget.drink.name,
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        )),
                     FutureBuilder<List<Ingredient>>(
                         future: futureIngredients,
                         builder: (context, snapshot) {
@@ -51,7 +53,11 @@ class _DrinkDetailsViewState extends State<DrinkDetailsView> {
                           }
                           // print(futureDrinks.toString());
                           return Text("Sorry, could not fetch ingredients.");
-                        })
+                        }),
+                    Padding(
+                      padding: EdgeInsets.only(top: 15),
+                      child: _DrinkDetails(drink: widget.drink),
+                    )
                   ]))
         ])));
   }
@@ -64,51 +70,53 @@ class _DrinkDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Column(
+        children: [
       Text(
-        drink.name,
-        style: Theme.of(context).textTheme.titleLarge,
+        '${drink.category}',
       ),
       Text(
-        'Drink Category: ${drink.category}',
-      ),
-      Text(
-        'Glass: ${drink.glass}',
+        'Served in ${drink.glass}',
       ),
       Padding(
-        padding: EdgeInsets.only(top: 5),
+        padding: EdgeInsets.only(top: 15),
         child: Text(
           'Instructions',
-          style: Theme.of(context).textTheme.bodyLarge,
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
       ),
       Text(
         drink.instructions,
         textAlign: TextAlign.justify,
-      ),
-      Padding(
-        padding: EdgeInsets.only(top: 5),
-        child: Text(
-          'Ingredients',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ),
+      )
     ]);
   }
 }
 
 class _IngredientsInfo extends StatelessWidget {
   const _IngredientsInfo({super.key, required this.ingredientsInfo});
-
   final List<Ingredient> ingredientsInfo;
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: ingredientsInfo.map((ingredient) {
-        return Text(ingredient.name);
-      }).toList(),
-    );
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+        child: Row(
+          children: ingredientsInfo.map((ingredient) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                // Make it oval by giving a high border radius
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.secondary,
+                    width: 2), // Border color and width
+              ),
+              child: Text(
+                ingredient.name,
+              ),
+            );
+          }).toList(),
+        ));
   }
 }
