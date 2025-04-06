@@ -93,7 +93,7 @@ class DrinkFetcher {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         _categories = (responseData['data'] as List<dynamic>)
             .map((category) =>
-                category.toString()) // Convert each item to a String
+                category.toString())
             .toList();
       } else {
         _categories = [];

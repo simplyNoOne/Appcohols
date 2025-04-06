@@ -4,7 +4,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 class CustomFirstPageError extends StatelessWidget {
   const CustomFirstPageError({
     super.key,
-    required this.pagingController,
+    required this.pagingController
   });
 
   final PagingController<Object, Object> pagingController;

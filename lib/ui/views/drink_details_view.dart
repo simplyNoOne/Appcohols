@@ -99,7 +99,7 @@ class _IngredientsInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+        scrollDirection: Axis.horizontal,
         child: Row(
           children: ingredientsInfo.map((ingredient) {
             return Container(
@@ -107,10 +107,9 @@ class _IngredientsInfo extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 5),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                // Make it oval by giving a high border radius
                 border: Border.all(
                     color: Theme.of(context).colorScheme.secondary,
-                    width: 2), // Border color and width
+                    width: 2),
               ),
               child: Text(
                 ingredient.name,
